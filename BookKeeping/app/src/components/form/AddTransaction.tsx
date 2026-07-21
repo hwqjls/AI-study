@@ -1,7 +1,8 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, type FocusEvent } from 'react'
 import { categoriesForType } from '../../domain/categories'
 import { today } from '../../domain/date'
 import type { RecordFormInput, RecordType } from '../../domain/types'
+import { validateRecordInput } from '../../domain/validate'
 import { useRecordsStore } from '../../store/recordsStore'
 
 const DEFAULT_EXPENSE = 'exp-food'
@@ -10,6 +11,8 @@ const DEFAULT_INCOME = 'inc-salary'
 function defaultCategory(type: RecordType): string {
   return type === 'expense' ? DEFAULT_EXPENSE : DEFAULT_INCOME
 }
+
+type FieldErrors = Partial<Record<keyof RecordFormInput, string>>
 
 export interface AddTransactionProps {
   initialDate?: string
@@ -24,35 +27,83 @@ export function AddTransaction({ initialDate = today(), onSuccess }: AddTransact
   const [categoryId, setCategoryId] = useState(defaultCategory('expense'))
   const [date, setDate] = useState(initialDate)
   const [note, setNote] = useState('')
-  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof RecordFormInput, string>>>(
-    {},
-  )
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   const categories = categoriesForType(type)
 
-  const onTypeChange = (next: RecordType) => {
-    setType(next)
-    setCategoryId(defaultCategory(next))
-    setFieldErrors((prev) => ({ ...prev, type: undefined, categoryId: undefined }))
+  const buildInput = (): RecordFormInput => ({
+    type,
+    amountYuan,
+    categoryId,
+    date,
+    note,
+  })
+
+  const validateForm = (input: RecordFormInput): FieldErrors | null => {
+    const result = validateRecordInput(input)
+    if (result.ok) return null
+    return result.fieldErrors
   }
+
+  const clearFieldError = (field: keyof RecordFormInput) => {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev
+      const next = { ...prev }
+      delete next[field]
+      return next
+    })
+  }
+
+  const validateField = (field: keyof RecordFormInput, input = buildInput()) => {
+    const errors = validateForm(input)
+    setFieldErrors((prev) => {
+      const next = { ...prev }
+      if (errors?.[field]) {
+        next[field] = errors[field]
+      } else {
+        delete next[field]
+      }
+      return next
+    })
+  }
+
+  const onTypeChange = (next: RecordType) => {
+    const nextCategoryId = defaultCategory(next)
+    setType(next)
+    setCategoryId(nextCategoryId)
+    clearFieldError('type')
+    clearFieldError('categoryId')
+    validateField('categoryId', {
+      type: next,
+      amountYuan,
+      categoryId: nextCategoryId,
+      date,
+      note,
+    })
+  }
+
+  const onFieldBlur =
+    (field: keyof RecordFormInput) => (_e: FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
+      validateField(field)
+    }
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (submitting) return
 
     setFormError(null)
-    setFieldErrors({})
+    const input = buildInput()
+    const errors = validateForm(input)
 
-    const input: RecordFormInput = {
-      type,
-      amountYuan,
-      categoryId,
-      date,
-      note,
+    if (errors) {
+      setFieldErrors(errors)
+      setFormError('请检查表单填写')
+      return
     }
 
+    setFieldErrors({})
     setSubmitting(true)
     const result = addRecord(input)
     setSubmitting(false)
@@ -106,11 +157,14 @@ export function AddTransaction({ initialDate = today(), onSuccess }: AddTransact
           inputMode="decimal"
           enterKeyHint="done"
           value={amountYuan}
-          onChange={(e) => setAmountYuan(e.target.value)}
+          onChange={(e) => {
+            setAmountYuan(e.target.value)
+            clearFieldError('amountYuan')
+          }}
+          onBlur={onFieldBlur('amountYuan')}
           placeholder="0.00"
           className="app-input text-lg font-semibold tabular-nums"
           autoComplete="off"
-          required
           aria-invalid={Boolean(fieldErrors.amountYuan)}
           aria-describedby={fieldErrors.amountYuan ? 'add-amount-error' : undefined}
         />
@@ -129,7 +183,11 @@ export function AddTransaction({ initialDate = today(), onSuccess }: AddTransact
           id="add-category"
           name="categoryId"
           value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
+          onChange={(e) => {
+            setCategoryId(e.target.value)
+            clearFieldError('categoryId')
+          }}
+          onBlur={onFieldBlur('categoryId')}
           className="app-input"
           aria-invalid={Boolean(fieldErrors.categoryId)}
           aria-describedby={fieldErrors.categoryId ? 'add-category-error' : undefined}
@@ -156,7 +214,11 @@ export function AddTransaction({ initialDate = today(), onSuccess }: AddTransact
           name="date"
           type="date"
           value={date}
-          onChange={(e) => setDate(e.target.value)}
+          onChange={(e) => {
+            setDate(e.target.value)
+            clearFieldError('date')
+          }}
+          onBlur={onFieldBlur('date')}
           className="app-input"
           aria-invalid={Boolean(fieldErrors.date)}
           aria-describedby={fieldErrors.date ? 'add-date-error' : undefined}
@@ -176,7 +238,11 @@ export function AddTransaction({ initialDate = today(), onSuccess }: AddTransact
           id="add-note"
           name="note"
           value={note}
-          onChange={(e) => setNote(e.target.value)}
+          onChange={(e) => {
+            setNote(e.target.value)
+            clearFieldError('note')
+          }}
+          onBlur={onFieldBlur('note')}
           maxLength={100}
           placeholder="添加备注…"
           className="app-input"
