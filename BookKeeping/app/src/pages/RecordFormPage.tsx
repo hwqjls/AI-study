@@ -69,11 +69,12 @@ export function RecordFormPage() {
   if (!isEdit) {
     return (
       <AppShell title="记一笔" hideNav>
-        <div className="mb-4">
-          <Link to={`/?date=${initialDate}`} className="text-sm text-[var(--color-accent)]">
-            ← 返回
-          </Link>
-        </div>
+        <Link
+          to={`/?date=${initialDate}`}
+          className="btn-ghost -ml-2 mb-4 inline-flex text-[var(--color-primary)]"
+        >
+          ← 返回
+        </Link>
         <AddTransaction initialDate={initialDate} onSuccess={onAddSuccess} />
       </AppShell>
     )
@@ -119,41 +120,44 @@ export function RecordFormPage() {
 
   return (
     <AppShell title="编辑记录" hideNav>
-      <div className="mb-4">
-        <Link to={`/?date=${date}`} className="text-sm text-[var(--color-accent)]">
-          ← 返回
-        </Link>
-      </div>
+      <Link
+        to={`/?date=${date}`}
+        className="btn-ghost -ml-2 mb-4 inline-flex text-[var(--color-primary)]"
+      >
+        ← 返回
+      </Link>
 
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={onSubmit} className="app-card space-y-5 p-5">
         <fieldset>
-          <legend className="mb-2 text-sm font-medium">类型</legend>
-          <div className="flex gap-2">
-            {(['expense', 'income'] as const).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => onTypeChange(t)}
-                className={[
-                  'flex-1 rounded-lg border py-2.5 text-sm font-medium',
-                  type === t
-                    ? t === 'expense'
-                      ? 'border-[var(--color-expense)] bg-orange-50 text-[var(--color-expense)]'
-                      : 'border-[var(--color-income)] bg-green-50 text-[var(--color-income)]'
-                    : 'border-[var(--color-border)] text-[var(--color-muted)]',
-                ].join(' ')}
-              >
-                {t === 'expense' ? '支出' : '收入'}
-              </button>
-            ))}
+          <legend className="mb-3 text-sm font-semibold text-[var(--color-text)]">类型</legend>
+          <div className="grid grid-cols-2 gap-3">
+            {(['expense', 'income'] as const).map((t) => {
+              const selected = type === t
+              const isExpense = t === 'expense'
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => onTypeChange(t)}
+                  className={[
+                    'min-h-[48px] cursor-pointer rounded-[var(--radius-md)] border-2 py-3 text-sm font-semibold transition-all duration-200',
+                    selected
+                      ? isExpense
+                        ? 'border-[var(--color-expense)] bg-[var(--color-expense-soft)] text-[var(--color-expense)]'
+                        : 'border-[var(--color-income)] bg-[var(--color-income-soft)] text-[var(--color-income)]'
+                      : 'border-transparent bg-[var(--color-surface-muted)] text-[var(--color-muted)] hover:text-[var(--color-text)]',
+                  ].join(' ')}
+                >
+                  {isExpense ? '支出' : '收入'}
+                </button>
+              )
+            })}
           </div>
-          {fieldErrors.type ? (
-            <p className="mt-1 text-xs text-[var(--color-expense)]">{fieldErrors.type}</p>
-          ) : null}
+          {fieldErrors.type ? <p className="field-error">{fieldErrors.type}</p> : null}
         </fieldset>
 
         <div>
-          <label htmlFor="amount" className="mb-1 block text-sm font-medium">
+          <label htmlFor="amount" className="mb-2 block text-sm font-semibold">
             金额（元）
           </label>
           <input
@@ -163,23 +167,21 @@ export function RecordFormPage() {
             value={amountYuan}
             onChange={(e) => setAmountYuan(e.target.value)}
             placeholder="0.00"
-            className="w-full rounded-lg border border-[var(--color-border)] px-3 py-2.5 text-base"
+            className="app-input text-lg font-semibold tabular-nums"
             autoComplete="off"
           />
-          {fieldErrors.amountYuan ? (
-            <p className="mt-1 text-xs text-[var(--color-expense)]">{fieldErrors.amountYuan}</p>
-          ) : null}
+          {fieldErrors.amountYuan ? <p className="field-error">{fieldErrors.amountYuan}</p> : null}
         </div>
 
         <div>
-          <label htmlFor="category" className="mb-1 block text-sm font-medium">
+          <label htmlFor="category" className="mb-2 block text-sm font-semibold">
             分类
           </label>
           <select
             id="category"
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
-            className="w-full rounded-lg border border-[var(--color-border)] px-3 py-2.5 text-base"
+            className="app-input"
           >
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
@@ -188,12 +190,12 @@ export function RecordFormPage() {
             ))}
           </select>
           {fieldErrors.categoryId ? (
-            <p className="mt-1 text-xs text-[var(--color-expense)]">{fieldErrors.categoryId}</p>
+            <p className="field-error">{fieldErrors.categoryId}</p>
           ) : null}
         </div>
 
         <div>
-          <label htmlFor="date" className="mb-1 block text-sm font-medium">
+          <label htmlFor="date" className="mb-2 block text-sm font-semibold">
             日期
           </label>
           <input
@@ -201,15 +203,13 @@ export function RecordFormPage() {
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="w-full rounded-lg border border-[var(--color-border)] px-3 py-2.5 text-base"
+            className="app-input"
           />
-          {fieldErrors.date ? (
-            <p className="mt-1 text-xs text-[var(--color-expense)]">{fieldErrors.date}</p>
-          ) : null}
+          {fieldErrors.date ? <p className="field-error">{fieldErrors.date}</p> : null}
         </div>
 
         <div>
-          <label htmlFor="note" className="mb-1 block text-sm font-medium">
+          <label htmlFor="note" className="mb-2 block text-sm font-semibold">
             备注（可选）
           </label>
           <input
@@ -217,26 +217,22 @@ export function RecordFormPage() {
             value={note}
             onChange={(e) => setNote(e.target.value)}
             maxLength={100}
-            className="w-full rounded-lg border border-[var(--color-border)] px-3 py-2.5 text-base"
+            placeholder="添加备注…"
+            className="app-input"
           />
-          {fieldErrors.note ? (
-            <p className="mt-1 text-xs text-[var(--color-expense)]">{fieldErrors.note}</p>
-          ) : null}
+          {fieldErrors.note ? <p className="field-error">{fieldErrors.note}</p> : null}
         </div>
 
-        {formError ? <p className="text-sm text-[var(--color-expense)]">{formError}</p> : null}
+        {formError ? <p className="text-sm text-[var(--color-error)]">{formError}</p> : null}
 
-        <button
-          type="submit"
-          className="w-full rounded-lg bg-[var(--color-accent)] py-3 text-sm font-medium text-white"
-        >
+        <button type="submit" className="btn-primary w-full">
           保存
         </button>
 
         <button
           type="button"
           onClick={onDelete}
-          className="w-full rounded-lg border border-[var(--color-expense)] py-3 text-sm font-medium text-[var(--color-expense)]"
+          className="w-full cursor-pointer rounded-[var(--radius-md)] border-2 border-[var(--color-error)] py-3 text-sm font-semibold text-[var(--color-error)] transition-colors duration-200 hover:bg-red-50"
         >
           删除
         </button>

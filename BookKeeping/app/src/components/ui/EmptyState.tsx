@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { IconReceipt } from './icons'
 
 interface EmptyStateProps {
   message: string
@@ -12,12 +13,12 @@ export function EmptyState({
   actionTo = '/records/new',
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center gap-4 py-16 text-center">
-      <p className="text-[var(--color-muted)]">{message}</p>
-      <Link
-        to={actionTo}
-        className="rounded-lg bg-[var(--color-accent)] px-5 py-2.5 text-sm font-medium text-white"
-      >
+    <div className="app-card flex flex-col items-center gap-4 px-6 py-14 text-center">
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-surface-muted)] text-[var(--color-muted)]">
+        <IconReceipt className="h-7 w-7" aria-hidden />
+      </div>
+      <p className="max-w-[16rem] text-sm leading-relaxed text-[var(--color-muted)]">{message}</p>
+      <Link to={actionTo} className="btn-primary">
         {actionLabel}
       </Link>
     </div>
